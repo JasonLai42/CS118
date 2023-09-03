@@ -1,0 +1,9 @@
+sudo su
+
+050599
+
+sudo mount -t vboxsf Shared_Ubuntu16.04.6 /home/apothecary/sharefolder
+
+tc qdisc add dev lo root netem loss 10%
+
+tc qdisc del dev lo root

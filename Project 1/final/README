@@ -1,0 +1,69 @@
+Jason Lai
+jasonlaiusa@yahoo.com
+204995126
+
+High Level Design: 
+
+	The high level design of my server program is as follows: first a socket is 
+	created, bound, and configured to listen for incoming connection requests. Then, 
+	once a connection to a client is established, a main accept loop takes in incoming 
+	HTTP request messages. To parse the HTTP request and create an appropriate 
+	response, we first get the name of the file from the first line of the request 
+	message. To do this, I find the first space of line which separates the request 
+	method and file path; then, I find the last space, which separates the file path 
+	and HTTP version. Then, I extract the filename from the string using the indices of 
+	the string and also check if the file has an extension. Then, I open a file stream 
+	and use stat to get information about the requested file. I then format the 
+	response by creating c-strings for each header line of the HTTP response such as 
+	the status line, date, content length of the file, etc. I then use sprintf to print 
+	all of these strings to a larger buffer to form one entire HTTP response with the 
+	appropriate carriage returns and line-feeds; I then send this HTTP message to the 
+	client using write. And finally, I dynamically allocate a buffer and read the 
+	requested file into it, then send the buffer to the client using write. Then I free 
+	allocated memory and close the client socket/file descriptor. The loop then runs 
+	again, waiting for another HTTP request from the client.
+
+Problems I ran into:
+
+	Seeing as this project seems more simplified than it would have been if not for 
+	the current situation, I didn't run into many problems besides remembering some 
+	C programming things, as the TA provided several assumptions we could make about 
+	the testing. One problem I ran into was a small bug with getting filenames that 
+	have extensions from the HTTP requests. The bug was that the filename was not 
+	complete, however, I found the issue to be the placement of my counters in the for 
+	loop that keeps track of the indices in the buffer for the filename and extension. 
+
+	The biggest problem I had was reading the actual file from a file descriptor/file 
+	stream, as I tried using both fread and read. However, when I dynamically allocated 
+	memory, I was getting segmentation faults when the client would request a file. I 
+	spent a few hours trying to debug the segmentation fault, but could not find the 
+	issue. Then, apparently the issue was that I had my variable assignments for the 
+	malloc and read calls inside of if statements i.e. if((var = malloc(...)) < 0). 
+	I'm still confused by why this was causing segmentation faults, since I made no 
+	changes to the code other than separating the variable assignments and the error 
+	checking conditionals.
+
+	Aside from these bugs, everything else about the project was simple to do when you 
+	knew what to do. What I mean by that is that I spent the majority of my time trying 
+	to discern what the project spec was asking, as I felt some of the directions were 
+	ambiguous. Referring to Piazza was my go to for trying to understand what was being 
+	asked of us in designing the server.
+
+Additional Libraries and Acknowledgement:
+
+	I only really used one additional library: <time.h>, which was used to format the 
+	Date: and Last-Modified: headers.
+
+	The tutorials that I referenced were: 
+
+	https://www.geeksforgeeks.org/socket-programming-cc/
+	https://medium.com/@saurabhkushwahsingh/file-transfer-in-c-using-tcp-676a445e91bc
+	https://stackoverflow.com/questions/39896316/c-using-fstat-to-read-size-of-file
+	https://stackoverflow.com/questions/7548759/generate-a-date-string-in-http-response-date-format-in-c
+	https://stackoverflow.com/questions/4160347/close-vs-shutdown-socket
+	https://www.geeksforgeeks.org/dynamic-memory-allocation-in-c-using-malloc-calloc-free-and-realloc/
+	https://stackoverflow.com/questions/18034446/c-incompatible-integer-to-pointer-conversion-passing-int-to-parameter-of-type
+	https://www.tutorialspoint.com/cprogramming/c_file_io.htm
+	https://superuser.com/questions/241139/fopen-no-such-file-or-directory-error
+	https://stackoverflow.com/questions/586928/how-should-i-print-types-like-off-t-and-size-t
+	as well as the manpages of certain API's like read, fread, stat, fstat, sprintf, etc.

@@ -1,0 +1,7 @@
+TO DO:
+	1. since we assume all requests are formatted correctly, we are only concerned about line 1
+	2. handle returning html and txt in utf-8; returning jpg and png
+	3. handle responses:
+		- 200 ok
+		- head lines: example from book is sufficient
+	4. makefile

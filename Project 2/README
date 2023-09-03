@@ -1,0 +1,60 @@
+Jason Lai
+204995126
+jasonlaiusa@yahoo.com
+CS118 Project 2
+
+High Level Design:
+
+High level design of my implementation for project 2 is as follows: If first create a class object to represent a very basic TCP segment. 
+The class contains a struct that represents the TCP header, where there are six fields that are all unsigned shorts, so the entire header 
+is 12 Bytes. Then the class also has a 512 Byte buffer to store the file chunk that is to be sent in a segment. On actually running the 
+programs, the client first sends an ACK in its own while loop, and awaits for the SYNACK from the server. On the server side, if it 
+receives the SYN, it sends the SYNACK and opens a new .file for the client starting from 1.file. If the client receives a SYNACK, the 
+client then sends the first data segment that is also the ACK for the server's SYN and we have finished the three-way handshake and exit 
+the loop; if the client doesn't receive the SYNACK, we reach a retransmission timeout for the initial SYN and resend it. Note that the 
+client is already using the sending window to restrict its sending rate; I implemented the window with a deque to store sent segments, 
+another deque to store the ACK numbers expected from the server (for cumulative ACK purposes), have a counter to keep track of the number 
+of unacked segments sent. Once the first data segment is sent, we check if the entire file has been sent. If so, we move to immediately 
+send the FIN segment to initiate connection teardown; otherwise, we continue to another while loop where we send 9 or less packets to 
+begin our 10 segment pipeline. I implemented the window to be 10 segments always, since we are always trying to send the maximum size of 
+data (512 Bytes) in a 5120 Byte window, so we will always send at most 10 unacked segments at a time. Then, if during the sending of the 
+9 or less segments we reach the end-of-file, we move to send the FIN segment if there is room in the sending window and begin teardown. If
+we still have data left, we go to a third loop where we send segments whenever we receive an ACK for however many segments the cumulative 
+ACK accounts for. After all data has been sent, we move to connection teardown to send the FIN and wait for any leftover ACKs from the 
+server for data segments, the ACK for the sent FIN, and the server's FIN. Once we receive the server's FIN, we start the 2 second window 
+before the connection is closed and ACK all FINS, while dropping all other packets. Throughout this process the, server is simply ACKing 
+all data segments it receives and writing to the .file. At the FIN stage, the server will wait for the ACK for its FIN, or until it 
+retransmits 4 duplicate SYNS before closing the connection. Once the connection is closed, the server increments the connection count (to 
+name the next .file for new clients), closes all file pointers and resets all flags, and returns to blocking on awaiting for a SYN from a 
+new client.
+
+Problems I Ran Into:
+
+One problem I ran into at the beginning was using C, but implementing the functionality the spec asks for was looking like it was going to 
+be a really long program with certain features of C++ like classes and data structures. So, I had to change my code to C++ in the middle of 
+development. Another problem I ran into was purely technical, where I tried using bit fields to represent the ACK, SYN, and FIN flags in the 
+TCP header, but this also made my implementation unnecessarily complicated, especially since we're asked to pad the 12 Byte buffer for the 
+header if there's extra space anyways. I also had issues with transimission of my fields and data, where my data_length field was not being 
+converted correctly in the char* buffer I send to the server. I found that I needed to use an unsigned char buffer instead of a signed one, 
+since my data fields are unsigned. Another issue I had was with seeding to produce random sequence numbers, with the client and server 
+having the exact same sequence numbers due to bad seeding. This is because the client and server are run on the local machine and the rand() 
+function is seeded using timestamps, so the difference in time from when the client sends the SYN that is received by the server is not 
+large enough to seed the rand() function to produce different random numbers. To fix this, a TA Quanru Li suggested using getpid() and adding 
+it to the timestamps so that the seeds will be different and this worked. Other issues I faced were just normal debugging problems. The 
+project was very much so just trial and error. The most painful part about this project was just setting up the sequence and acknowledgement 
+numbers and flow control for what to do when there is loss.
+
+Additional Resources:
+
+https://www.cs.cmu.edu/afs/cs/academic/class/15213-f99/www/class26/udpclient.c
+https://www.cs.cmu.edu/afs/cs/academic/class/15213-f99/www/class26/udpserver.c
+https://www.cs.bu.edu/teaching/cpp/writing-makefiles/
+https://www.cs.swarthmore.edu/~newhall/unixhelp/howto_makefiles.html
+https://www.man7.org/linux/man-pages/man3/fopen.3.html
+http://www.cplusplus.com/reference/cstdio/fread/
+http://www.cplusplus.com/reference/cstdio/feof/
+http://www.cplusplus.com/reference/cstdlib/rand/
+http://www.cplusplus.com/forum/beginner/130716/
+http://www.cplusplus.com/reference/deque/deque/
+https://stackoverflow.com/questions/39016982/convert-char-buffer-to-struct
+https://www.includehelp.com/tips/c/copy-two-bytes-integer-number-short-int-into-bytes.aspx
